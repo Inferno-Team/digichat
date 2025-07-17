@@ -1,9 +1,20 @@
 {
-    "version": "1.0.0",
     "name": "digiworld/digichat",
     "description": "Laravel package for DigiChat WhatsApp API integration",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "laravel",
+        "whatsapp",
+        "api",
+        "digichat"
+    ],
+    "homepage": "https://chat.digiworld-dev.com/",
+    "support": {
+        "email": "info@digiworld-dev.com",
+        "issues": "https://chat.digiworld-dev.com/",
+        "source": "https://chat.digiworld-dev.com/"
+    },
     "authors": [
         {
             "name": "DigiChat",
@@ -29,5 +40,7 @@
                 "DigiChat": "Digiworld\\DigiChat\\Facades\\DigiChat"
             }
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
