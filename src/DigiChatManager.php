@@ -24,7 +24,7 @@ class DigiChatManager
         if (empty($this->secret)) {
             throw new DigiChatException('API secret is not configured');
         }
-        $this->baseUrl = "https://chat.digiworld-dev.com/api";
+        $this->baseUrl = "https://digichat.digiworld-dev.com/api";
     }
 
     public function sendMessage(string $phoneNumber, string $message): array
@@ -52,11 +52,7 @@ class DigiChatManager
         ])->post("{$this->baseUrl}/whatsapp/{$token}/sendMessage", $payload);
 
         if ($response->failed()) {
-            throw new DigiChatException(
-                'API request failed: ' . $response->body(),
-                $response->status(),
-                $response->json() ?? []
-            );
+            return $response()->json();
         }
 
         return $response->json();
