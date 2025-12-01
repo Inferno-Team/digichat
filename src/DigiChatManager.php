@@ -67,9 +67,7 @@ class DigiChatManager
 
     protected function http(): PendingRequest
     {
-        return Http::timeout(20)
-            ->acceptJson()
-            ->asJson();
+        return Http::timeout(20);
     }
 
     protected function endpoint(string $action): string
@@ -80,33 +78,48 @@ class DigiChatManager
 
     protected function sign(array $payload): array
     {
-        $timestamp  = Carbon::now()->timestamp;
+        $timestamp   = Carbon::now()->timestamp;
         $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($jsonPayload === false) {
+            throw new DigiChatException('Failed to json_encode payload: ' . json_last_error_msg());
+        }
 
         $signature = hash_hmac('sha256', $timestamp . $this->token . $jsonPayload, $this->secret);
 
         return [
-            'X-API-Token'     => $this->token,
-            'X-API-Timestamp' => $timestamp,
-            'X-API-Signature' => $signature,
-            'Content-Type'    => 'application/json',
-            'Accept'          => 'application/json',
+            'headers' => [
+                'X-API-Token'     => $this->token,
+                'X-API-Timestamp' => $timestamp,
+                'X-API-Signature' => $signature,
+                'Content-Type'    => 'application/json',
+                'Accept'          => 'application/json',
+            ],
+            'body' => $jsonPayload,
         ];
     }
+
 
     /** Generic POST with signing + robust error handling. */
     protected function post(string $action, array $payload): array
     {
-        $headers = $this->sign($payload);
-        $res = $this->http()->withHeaders($headers)->post($this->endpoint($action), $payload);
+        $signed = $this->sign($payload);
+
+        $res = Http::timeout(20)
+            ->withHeaders($signed['headers'])
+            ->withBody($signed['body'], 'application/json')
+            ->post($this->endpoint($action));
+
         return $this->handle($res);
     }
 
     /** Generic GET with signing (sign over the effective query). */
     protected function get(string $action, array $query = []): array
     {
-        $headers = $this->sign($query);
-        $res = $this->http()->withHeaders($headers)->get($this->endpoint($action), $query);
+        $signed = $this->sign($query);
+
+        $headers = $signed['headers'];
+        $res = $this->http()->withHeaders($headers)->get($this->endpoint($action), $signed['body']);
         return $this->handle($res);
     }
 
