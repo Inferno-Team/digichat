@@ -4,6 +4,8 @@ namespace Digiworld\DigiChat\Contracts;
 
 interface DigiChatContract
 {
+    public function start(): array;
+    public function refresh($withDeletion = false): array;
     public function sendMessage($to, $message, $options = []): array;
     public function getQr(): array;
     public function getStatus(): array;

@@ -64,6 +64,14 @@ class DigiChatManager
     {
         return $this->post('logout', ['withDeletion' => $withDeletion]);
     }
+    public function start(): array
+    {
+        return $this->post('start', []);
+    }
+    public function refresh($withDeletion = false): array
+    {
+        return $this->post('refresh', ['withDeletion' => $withDeletion]);
+    }
 
     /* -----------------------------------------------------------------
      |  Internals
