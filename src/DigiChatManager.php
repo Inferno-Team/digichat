@@ -28,6 +28,11 @@ class DigiChatManager
         }
     }
 
+    public function ping(): array
+    {
+        return $this->get('ping');
+    }
+
     /** Send a plain text message. */
     public function sendMessage(string $phoneNumber, string $message): array
     {

@@ -22,7 +22,7 @@ class InstallCommand extends Command
 
         $this->info('DigiChat package installed successfully!');
         $this->info('Please configure your API keys in the .env file:');
-        $this->line('DIGICHAT_API_KEY=your_api_key_here');
+        $this->line('DIGICHAT_API_TOKEN=your_api_key_here');
         $this->line('DIGICHAT_API_SECRET=your_api_secret_here');
     }
 }
