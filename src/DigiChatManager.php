@@ -73,6 +73,11 @@ class DigiChatManager
         return $this->post('refresh', ['withDeletion' => $withDeletion]);
     }
 
+    public function getInviteInfo(string $inviteCode): array
+    {
+        return $this->post('invite-info', ['inviteCode' => $inviteCode]);
+    }
+
     /* -----------------------------------------------------------------
      |  Internals
      | -----------------------------------------------------------------

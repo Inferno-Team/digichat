@@ -11,4 +11,5 @@ interface DigiChatContract
     public function getStatus(): array;
     public function logout($withDeletion = false): array;
     public function ping(): array;
+    public function getInviteInfo(string $inviteCode): array;
 }
