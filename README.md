@@ -9,7 +9,7 @@ DigiChat is a lightweight Laravel package that lets your app send WhatsApp messa
 ## ✅ Requirements
 
 - PHP **8.2+**
-- Laravel **8 / 9 / 10 / 11 / 12**
+- Laravel **8 / 9 / 10 / 11 / 12 / 13**
 
 ---
 
