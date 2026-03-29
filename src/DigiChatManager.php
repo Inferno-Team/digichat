@@ -31,7 +31,6 @@ class DigiChatManager implements DigiChatContract
     private const TYPE_MEDIA = 'media';
     private const TYPE_FILE = 'file';
     private const SEND_TEXT_ACTION = 'sendMessage';
-    private const SEND_MEDIA_ACTION = 'sendMedia';
 
     /**
      * What: Loads the credentials required to talk to the DigiChat API, with optional runtime overrides.
@@ -734,15 +733,13 @@ class DigiChatManager implements DigiChatContract
     }
 
     /**
-     * What: Maps a normalized content type to the correct DigiChat SaaS public route.
-     * When: Called immediately before the HTTP POST request is made.
-     * Why: The package must keep using the SaaS public routes while hiding route selection from consumers.
+     * What: Maps normalized outbound content to the canonical DigiChat SaaS send route.
+     * When: Called immediately before a send request is posted to the API.
+     * Why: The SaaS now accepts canonical text, media, and file payloads through `sendMessage`, so the package should prefer that route.
      */
     protected function resolveSendAction(string $messageType): string
     {
-        return $messageType === self::TYPE_TEXT
-            ? self::SEND_TEXT_ACTION
-            : self::SEND_MEDIA_ACTION;
+        return self::SEND_TEXT_ACTION;
     }
 
     /**

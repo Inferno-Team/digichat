@@ -103,7 +103,7 @@ class DigiChatManagerTest extends TestCase
     ): void {
         Http::fake(function (Request $request) use ($expectedChatId, $expectedTargetType) {
             $this->assertSame(
-                'https://digichat.digiworld-dev.com/api/whatsapp/test-token/sendMedia',
+                'https://digichat.digiworld-dev.com/api/whatsapp/test-token/sendMessage',
                 $request->url()
             );
 
@@ -131,7 +131,7 @@ class DigiChatManagerTest extends TestCase
     {
         Http::fake(function (Request $request) {
             $this->assertSame(
-                'https://digichat.digiworld-dev.com/api/whatsapp/test-token/sendMedia',
+                'https://digichat.digiworld-dev.com/api/whatsapp/test-token/sendMessage',
                 $request->url()
             );
 
