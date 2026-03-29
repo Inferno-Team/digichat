@@ -2,6 +2,7 @@
 
 namespace Digiworld\DigiChat\Tests;
 
+use Carbon\Carbon;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -11,7 +12,9 @@ class DigiChatManagerTest extends TestCase
     {
         return [
             'contact digits' => ['963123456789', '963123456789', 'contact'],
+            'contact +digits' => ['+963123456789', '963123456789', 'contact'],
             'contact @c.us' => ['963123456789@c.us', '963123456789', 'contact'],
+            'contact +@c.us' => ['+963123456789@c.us', '963123456789', 'contact'],
             'group' => ['123456789@g.us', '123456789@g.us', 'group'],
             'newsletter' => ['123456789@newsletter', '123456789@newsletter', 'channel'],
         ];
@@ -263,6 +266,95 @@ class DigiChatManagerTest extends TestCase
         $this->assertSame(404, $response['status']);
         $this->assertSame('NO_SESSION', $response['error']);
         $this->assertSame('DigiChat session was not found or is not paired.', $response['message']);
+    }
+
+    public function test_constructor_credentials_override_config(): void
+    {
+        Carbon::setTestNow(Carbon::create(2025, 1, 1, 0, 0, 0, 'UTC'));
+
+        try {
+            Http::fake(function (Request $request) {
+                $payload = json_decode($request->body(), true, 512, JSON_THROW_ON_ERROR);
+                $expectedSignature = hash_hmac(
+                    'sha256',
+                    '1735689600manual-token' . json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'manual-secret'
+                );
+
+                $this->assertSame(
+                    'https://digichat.digiworld-dev.com/api/whatsapp/manual-token/channel-info',
+                    $request->url()
+                );
+                $this->assertTrue($request->hasHeader('X-API-Token', 'manual-token'));
+                $this->assertSame($expectedSignature, $request->header('X-API-Signature')[0]);
+
+                return Http::response($this->channelInfoResponse(), 200);
+            });
+
+            $response = $this->manager('manual-token', 'manual-secret')->getChannelInfo('AbCdEfGhIjK');
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        $this->assertTrue($response['success']);
+        $this->assertSame('Channel Name', $response['channelInfo']['name']);
+    }
+
+    public function test_session_returns_isolated_manager_without_mutating_default_client(): void
+    {
+        Carbon::setTestNow(Carbon::create(2025, 1, 1, 0, 0, 0, 'UTC'));
+
+        $captured = [];
+
+        try {
+            Http::fake(function (Request $request) use (&$captured) {
+                $captured[] = [
+                    'url' => $request->url(),
+                    'token' => $request->header('X-API-Token')[0],
+                    'signature' => $request->header('X-API-Signature')[0],
+                    'payload' => json_decode($request->body(), true, 512, JSON_THROW_ON_ERROR),
+                ];
+
+                return Http::response($this->channelInfoResponse(), 200);
+            });
+
+            $defaultClient = $this->manager();
+            $customClient = $defaultClient->session('session-token', 'session-secret');
+
+            $this->assertNotSame($defaultClient, $customClient);
+
+            $customClient->getChannelInfo('AbCdEfGhIjK');
+            $defaultClient->getChannelInfo('AbCdEfGhIjK');
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        $this->assertCount(2, $captured);
+
+        $payloadJson = json_encode(
+            ['inviteCode' => 'AbCdEfGhIjK'],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
+        $this->assertSame(
+            'https://digichat.digiworld-dev.com/api/whatsapp/session-token/channel-info',
+            $captured[0]['url']
+        );
+        $this->assertSame('session-token', $captured[0]['token']);
+        $this->assertSame(
+            hash_hmac('sha256', '1735689600session-token' . $payloadJson, 'session-secret'),
+            $captured[0]['signature']
+        );
+
+        $this->assertSame(
+            'https://digichat.digiworld-dev.com/api/whatsapp/test-token/channel-info',
+            $captured[1]['url']
+        );
+        $this->assertSame('test-token', $captured[1]['token']);
+        $this->assertSame(
+            hash_hmac('sha256', '1735689600test-token' . $payloadJson, 'test-secret'),
+            $captured[1]['signature']
+        );
     }
 
     public function test_get_channel_info_sends_invite_code_payload(): void

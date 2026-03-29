@@ -39,8 +39,8 @@ abstract class TestCase extends BaseTestCase
         parent::tearDown();
     }
 
-    protected function manager(): DigiChatManager
+    protected function manager(?string $token = null, ?string $secret = null): DigiChatManager
     {
-        return new DigiChatManager();
+        return new DigiChatManager($token, $secret);
     }
 }

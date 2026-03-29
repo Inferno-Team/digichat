@@ -10,6 +10,13 @@ namespace Digiworld\DigiChat\Contracts;
 interface DigiChatContract
 {
     /**
+     * What: Creates a new DigiChat client instance for a specific session token and secret.
+     * When: Use this when one Laravel app needs to talk to multiple DigiChat sessions.
+     * Why: Returning a fresh client keeps custom credentials isolated from the default config-backed client.
+     */
+    public function session(?string $token = null, ?string $secret = null): self;
+
+    /**
      * What: Sends a canonical or backward-compatible payload through the unified send pipeline.
      * When: Use this when the caller already has a prepared payload.
      * Why: This is the lowest-level public send entry point for advanced integrations.

@@ -34,14 +34,14 @@ class DigiChatManager implements DigiChatContract
     private const SEND_MEDIA_ACTION = 'sendMedia';
 
     /**
-     * What: Loads the package credentials required to talk to the DigiChat API.
-     * When: Called automatically when the package client is created.
-     * Why: Failing early on missing credentials avoids ambiguous runtime request errors.
+     * What: Loads the credentials required to talk to the DigiChat API, with optional runtime overrides.
+     * When: Called automatically when the default client is created or manually when building a custom session client.
+     * Why: Supporting constructor overrides lets one Laravel project use multiple DigiChat sessions without losing config defaults.
      */
-    public function __construct()
+    public function __construct(?string $token = null, ?string $secret = null)
     {
-        $this->token = (string) config('digichat.api_token');
-        $this->secret = (string) config('digichat.api_secret');
+        $this->token = $token ?? (string) config('digichat.api_token');
+        $this->secret = $secret ?? (string) config('digichat.api_secret');
 
         if ($this->token === '') {
             throw new DigiChatException('API token is not configured');
@@ -50,6 +50,16 @@ class DigiChatManager implements DigiChatContract
         if ($this->secret === '') {
             throw new DigiChatException('API secret is not configured');
         }
+    }
+
+    /**
+     * What: Creates a fresh DigiChat client for another session token and secret.
+     * When: Use this when the current application needs to send through more than one DigiChat session.
+     * Why: Returning a new manager instance avoids mutating the default config-backed client and keeps session credentials isolated.
+     */
+    public function session(?string $token = null, ?string $secret = null): self
+    {
+        return new self($token, $secret);
     }
 
     /**
@@ -532,6 +542,7 @@ class DigiChatManager implements DigiChatContract
         $contactValue = str_ends_with($chatId, self::CONTACT_SUFFIX)
             ? substr($chatId, 0, -strlen(self::CONTACT_SUFFIX))
             : $chatId;
+        $contactValue = ltrim($contactValue, '+');
 
         $digits = preg_replace('/\D+/', '', $contactValue) ?? '';
         if ($digits === '') {

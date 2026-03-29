@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Facade;
  * When: Use this in Laravel applications that prefer facade-style access over constructor injection.
  * Why: The facade keeps package usage concise while still resolving the shared manager from the container.
  *
+ * @method static \Digiworld\DigiChat\DigiChatManager session(?string $token = null, ?string $secret = null)
  * @method static array send(array $payload)
  * @method static array sendMessage(string $phoneNumber, string $message)
  * @method static array sendText(string $chatId, string $text, array $options = [])

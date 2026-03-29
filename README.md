@@ -70,6 +70,38 @@ Route::get('/digichat/test', function (DigiChatManager $digichat) {
 
 ---
 
+## 🔀 Multi Session
+
+The package config acts as the **default session**.
+
+If you need multiple DigiChat sessions in the same Laravel project, use either the facade `session()` helper or create a manager with credentials directly.
+
+Using the **Facade session helper**:
+
+```php
+use Digiworld\DigiChat\Facades\DigiChat;
+
+$sessionA = DigiChat::session('token-a', 'secret-a');
+$sessionB = DigiChat::session('token-b', 'secret-b');
+
+$sessionA->sendText('123456789@g.us', 'Message from session A');
+$sessionB->sendText('987654321@g.us', 'Message from session B');
+```
+
+Using the **Manager constructor**:
+
+```php
+use Digiworld\DigiChat\DigiChatManager;
+
+$client = new DigiChatManager('token-a', 'secret-a');
+
+$client->sendText('123456789@g.us', 'Message from custom client');
+```
+
+If `token` or `secret` is `null`, the package falls back to the values from `config/digichat.php`.
+
+---
+
 ## 💬 Chat ID Formats
 
 - Contact: `963XXXXXXXX` or `963XXXXXXXX@c.us`
@@ -78,6 +110,7 @@ Route::get('/digichat/test', function (DigiChatManager $digichat) {
 
 Notes:
 
+- Contact numbers starting with `+` are normalized automatically.
 - `sendMessage()` is still available for plain contact text messages.
 - `sendText()` supports contacts, groups, and newsletters.
 - `sendMedia()` supports contacts, groups, and newsletters.
@@ -88,7 +121,17 @@ Notes:
 
 ## 📚 Available Methods
 
-### 1) `sendMessage(string $phoneNumber, string $message): array`
+### 1) `session(?string $token = null, ?string $secret = null): DigiChatManager`
+
+Create an isolated client for another DigiChat session.
+
+```php
+$otherSession = DigiChat::session('token-a', 'secret-a');
+
+$otherSession->sendText('123456789@g.us', 'Hello from another session');
+```
+
+### 2) `sendMessage(string $phoneNumber, string $message): array`
 
 Send a plain text message to a contact.
 
@@ -96,7 +139,7 @@ Send a plain text message to a contact.
 DigiChat::sendMessage('963XXXXXXXX', 'Hello there');
 ```
 
-### 2) `send(array $payload): array`
+### 3) `send(array $payload): array`
 
 Send a prepared payload.
 
@@ -108,7 +151,7 @@ DigiChat::send([
 ]);
 ```
 
-### 3) `sendText(string $chatId, string $text, array $options = []): array`
+### 4) `sendText(string $chatId, string $text, array $options = []): array`
 
 Send text to a contact, group, or newsletter.
 
@@ -118,7 +161,7 @@ DigiChat::sendText('123456789@g.us', 'Hello group');
 DigiChat::sendText('123456789@newsletter', 'Latest update');
 ```
 
-### 4) `sendMedia(string $chatId, array|string $media, ?string $caption = null, array $options = []): array`
+### 5) `sendMedia(string $chatId, array|string $media, ?string $caption = null, array $options = []): array`
 
 Send media with an optional caption.
 
@@ -136,7 +179,7 @@ DigiChat::sendMedia('123456789@newsletter', [
 ], 'Channel update');
 ```
 
-### 5) `sendFile(string $chatId, array|string $media, ?string $caption = null, array $options = []): array`
+### 6) `sendFile(string $chatId, array|string $media, ?string $caption = null, array $options = []): array`
 
 Send a file to a contact or group.
 
@@ -148,7 +191,7 @@ DigiChat::sendFile('123456789@g.us', [
 ], 'Monthly report');
 ```
 
-### 6) `getQr(): array`
+### 7) `getQr(): array`
 
 Get the current QR payload for session pairing.
 
@@ -156,7 +199,7 @@ Get the current QR payload for session pairing.
 $qr = DigiChat::getQr();
 ```
 
-### 7) `getStatus(): array`
+### 8) `getStatus(): array`
 
 Get the current session status.
 
@@ -164,7 +207,7 @@ Get the current session status.
 $status = DigiChat::getStatus();
 ```
 
-### 8) `start(): array`
+### 9) `start(): array`
 
 Start the session.
 
@@ -172,7 +215,7 @@ Start the session.
 $start = DigiChat::start();
 ```
 
-### 9) `refresh(bool $withDeletion = false): array`
+### 10) `refresh(bool $withDeletion = false): array`
 
 Refresh the session.
 
@@ -181,7 +224,7 @@ $refresh = DigiChat::refresh();
 $refreshAndDelete = DigiChat::refresh(withDeletion: true);
 ```
 
-### 10) `logout(bool $withDeletion = false): array`
+### 11) `logout(bool $withDeletion = false): array`
 
 Logout the current session.
 
@@ -190,7 +233,7 @@ $logout = DigiChat::logout();
 $logoutAndDelete = DigiChat::logout(withDeletion: true);
 ```
 
-### 11) `ping(): array`
+### 12) `ping(): array`
 
 Check API availability.
 
@@ -198,7 +241,7 @@ Check API availability.
 $ping = DigiChat::ping();
 ```
 
-### 12) `getInviteInfo(string $inviteCode): array`
+### 13) `getInviteInfo(string $inviteCode): array`
 
 Get WhatsApp invite information.
 
@@ -206,7 +249,7 @@ Get WhatsApp invite information.
 $invite = DigiChat::getInviteInfo('YOUR_INVITE_CODE');
 ```
 
-### 13) `getChannelInfo(array|string $invite): array`
+### 14) `getChannelInfo(array|string $invite): array`
 
 Get newsletter / channel information from an invite code or invite link.
 
@@ -237,6 +280,8 @@ Route::get('/digichat/demo', function () {
 ## 📝 Notes
 
 - All methods return the API response as an array.
+- Config credentials act as the default session.
+- Use `session()` or `new DigiChatManager($token, $secret)` for multi-session usage.
 - Existing `sendMessage()` integrations remain supported.
 - New projects can use `sendText()`, `sendMedia()`, `sendFile()`, or `send()`.
 - `getChannelInfo()` can resolve channel details from either a code or a full WhatsApp channel invite link.
