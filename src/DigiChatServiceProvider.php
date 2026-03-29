@@ -15,18 +15,26 @@ class DigiChatServiceProvider extends ServiceProvider
     /**
      * What: Registers the DigiChat manager and its aliases in the Laravel container.
      * When: Called during the application's service registration phase.
-     * Why: Binding the manager once gives facades, contracts, and direct resolution the same client instance shape.
+     * Why: Keeping the facade as the default config-backed client while allowing runtime manager construction enables multi-session usage.
      */
     public function register()
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/digichat.php', 'digichat');
 
-        $this->app->singleton(DigiChatManager::class, function () {
-            return new DigiChatManager();
+        $this->app->bind(DigiChatManager::class, function ($app, array $parameters = []) {
+            return new DigiChatManager(
+                $parameters['token'] ?? null,
+                $parameters['secret'] ?? null
+            );
         });
 
-        $this->app->alias(DigiChatManager::class, DigiChatContract::class);
-        $this->app->alias(DigiChatManager::class, 'digichat');
+        $this->app->bind(DigiChatContract::class, function ($app, array $parameters = []) {
+            return $app->make(DigiChatManager::class, $parameters);
+        });
+
+        $this->app->singleton('digichat', function ($app) {
+            return $app->make(DigiChatManager::class);
+        });
     }
 
     /**

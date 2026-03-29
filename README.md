@@ -98,6 +98,15 @@ $client = new DigiChatManager('token-a', 'secret-a');
 $client->sendText('123456789@g.us', 'Message from custom client');
 ```
 
+Using the **Laravel container** with runtime credentials:
+
+```php
+$client = app(\Digiworld\DigiChat\DigiChatManager::class, [
+    'token' => 'token-a',
+    'secret' => 'secret-a',
+]);
+```
+
 If `token` or `secret` is `null`, the package falls back to the values from `config/digichat.php`.
 
 ---

@@ -3,6 +3,8 @@
 namespace Digiworld\DigiChat\Tests;
 
 use Carbon\Carbon;
+use Digiworld\DigiChat\Contracts\DigiChatContract;
+use Digiworld\DigiChat\DigiChatServiceProvider;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -355,6 +357,49 @@ class DigiChatManagerTest extends TestCase
             hash_hmac('sha256', '1735689600test-token' . $payloadJson, 'test-secret'),
             $captured[1]['signature']
         );
+    }
+
+    public function test_service_provider_allows_runtime_credentials_when_resolving_from_container(): void
+    {
+        (new DigiChatServiceProvider($this->app))->register();
+
+        Carbon::setTestNow(Carbon::create(2025, 1, 1, 0, 0, 0, 'UTC'));
+
+        $captured = [];
+
+        try {
+            Http::fake(function (Request $request) use (&$captured) {
+                $captured[] = [
+                    'url' => $request->url(),
+                    'token' => $request->header('X-API-Token')[0],
+                ];
+
+                return Http::response($this->channelInfoResponse(), 200);
+            });
+
+            $runtimeManager = $this->app->make(DigiChatContract::class, [
+                'token' => 'runtime-token',
+                'secret' => 'runtime-secret',
+            ]);
+            $defaultClient = $this->app->make('digichat');
+
+            $runtimeManager->getChannelInfo('AbCdEfGhIjK');
+            $defaultClient->getChannelInfo('AbCdEfGhIjK');
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        $this->assertCount(2, $captured);
+        $this->assertSame(
+            'https://digichat.digiworld-dev.com/api/whatsapp/runtime-token/channel-info',
+            $captured[0]['url']
+        );
+        $this->assertSame('runtime-token', $captured[0]['token']);
+        $this->assertSame(
+            'https://digichat.digiworld-dev.com/api/whatsapp/test-token/channel-info',
+            $captured[1]['url']
+        );
+        $this->assertSame('test-token', $captured[1]['token']);
     }
 
     public function test_get_channel_info_sends_invite_code_payload(): void
